@@ -1,3 +1,5 @@
 zig-cache/
 zig-out/
 .vscode/
+roms/BytePusher.*
+roms/alleg42.dll
