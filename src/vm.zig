@@ -23,8 +23,10 @@ keymap: [16]c.SDL_KeyCode = undefined,
 
 pub fn init(self: *vm, allocator: *const std.mem.Allocator, filename: []const u8) !void {
     self.* = .{};
+
     self.ram = try allocator.alloc(u8, 16 * 1024 * 1024);
     for (self.ram) |*v| v.* = 0;
+
     _ = try std.fs.cwd().readFile(filename, self.ram);
 
     self.colormap = comptime blk: {
