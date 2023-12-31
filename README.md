@@ -20,5 +20,4 @@ The following subsystems have been implemented:
 | :---: | :---: |
 | Video |  &#10004; |
 | Audio |  &#10004; |
-| Controls |  &#10060; |
-
+| Controls |  &#10004; |
