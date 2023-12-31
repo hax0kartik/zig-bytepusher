@@ -22,10 +22,13 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     });
 
-    const sdl_path = "C:\\development\\libs\\SDL2-2.26.4\\";
-    exe.addIncludePath(.{ .path = sdl_path ++ "include" });
-    exe.addLibraryPath(.{ .path = sdl_path ++ "lib\\x64" });
-    b.installBinFile(sdl_path ++ "lib\\x64\\SDL2.dll", "SDL2.dll");
+    if (target.isNativeOs() and target.getOsTag() == .windows) {
+        const sdl_path = "C:\\development\\libs\\SDL2-2.26.4\\";
+        exe.addIncludePath(.{ .path = sdl_path ++ "include" });
+        exe.addLibraryPath(.{ .path = sdl_path ++ "lib\\x64" });
+        b.installBinFile(sdl_path ++ "lib\\x64\\SDL2.dll", "SDL2.dll");
+    }
+
     exe.linkSystemLibrary("sdl2");
     exe.linkLibC();
 
