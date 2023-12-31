@@ -19,6 +19,8 @@ texture: *c.SDL_Texture = undefined,
 
 audio: c.SDL_AudioDeviceID = undefined,
 
+keymap: [16]c.SDL_KeyCode = undefined,
+
 pub fn init(self: *vm, allocator: *const std.mem.Allocator, filename: []const u8) !void {
     self.* = .{};
     self.ram = try allocator.alloc(u8, 16 * 1024 * 1024);
@@ -40,13 +42,23 @@ pub fn init(self: *vm, allocator: *const std.mem.Allocator, filename: []const u8
 
     self.width = 256;
     self.height = 256;
-    self.scale = 3;
+    self.scale = 2;
 
     const size: u32 = self.width * self.height;
     self.pixels = try allocator.alloc(u32, size);
 
-    const res = c.SDL_Init(c.SDL_INIT_VIDEO | c.SDL_INIT_AUDIO);
-    std.debug.print("SDL_Init : {}\n", .{res});
+    self.keymap = comptime blk: {
+        const keymap = [_]c.SDL_KeyCode{
+            c.SDLK_0, c.SDLK_1, c.SDLK_2, c.SDLK_3,
+            c.SDLK_4, c.SDLK_5, c.SDLK_6, c.SDLK_7,
+            c.SDLK_8, c.SDLK_9, c.SDLK_a, c.SDLK_b,
+            c.SDLK_c, c.SDLK_d, c.SDLK_e, c.SDLK_f,
+        };
+
+        break :blk keymap;
+    };
+
+    _ = c.SDL_Init(c.SDL_INIT_VIDEO | c.SDL_INIT_AUDIO);
 
     self.window = c.SDL_CreateWindow(
         "zig-bytepusher",
@@ -93,12 +105,25 @@ pub fn deinit(self: *vm, allocator: *const std.mem.Allocator) void {
 
 pub fn run(self: *vm) bool {
     var sdlevent: c.SDL_Event = undefined;
+    var keys: u16 = @as(u16, self.ram[0]) << 8 | self.ram[1];
+
     while (c.SDL_PollEvent(&sdlevent) != 0) {
         switch (sdlevent.type) {
             c.SDL_QUIT => return false,
-            else => break,
+            else => {
+                for (self.keymap, 0..) |key, idx| {
+                    if (sdlevent.key.keysym.sym == key) {
+                        keys = keys & ~(@as(u16, 1) << @intCast(idx));
+                        const keydown: u16 = if (sdlevent.type == c.SDL_KEYDOWN) 1 else 0;
+                        keys |= keydown << @intCast(idx);
+                    }
+                }
+            },
         }
     }
+
+    self.ram[0] = @intCast(keys >> 8);
+    self.ram[1] = @intCast(keys & 0xff);
 
     var pc = readval(self, 2);
     // There is only one type of instruction.
